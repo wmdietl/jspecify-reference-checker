@@ -11,13 +11,13 @@
 # Set SHALLOW=1 to clone sibling projects at depth 1.
 #
 # This script automatically tries to download your fork of
-# jspecify/checker-framework, jspecify/jspecify, or jspecify/jdk, if they exist.
-# It uses the URL of the origin remote (the default remote created when cloning
-# a repo) to determine that.
+# wmdietl/checker-framework (merge-eisop branch), jspecify/jspecify, or
+# jspecify/jdk, if they exist. It uses the URL of the origin remote (the default
+# remote created when cloning a repo) to determine that.
 #
 # If that doesn't work, you can set the FORK environment value to the Git URL
 # that contains your forks. For example, FORK=git@github.com:myorg means this
-# script tries to clone the following before falling back to the JSpecify repos:
+# script tries to clone the following before falling back to the default repos:
 #
 # git@github:myorg/checker-framework.git
 # git@github:myorg/jspecify.git
@@ -31,7 +31,7 @@ run() {
   "$@"
 }
 
-forking_org() {
+remote_url() {
   if [[ -n "${FORK:-}" ]]; then
     echo "${FORK}"
     return
@@ -53,14 +53,18 @@ git_clone() {
   fi
   git+=("$@")
 
-  local forking_org
-  forking_org="$(forking_org)"
-  if [[ -n "${forking_org}" ]]; then
-    if run "${git[@]}" "${forking_org}/${repo}.git" "../${repo}"; then
+  local remote_url
+  remote_url="$(remote_url)"
+  if [[ -n "${remote_url}" ]]; then
+    if run "${git[@]}" "${remote_url}/${repo}.git" "../${repo}"; then
       return
     fi
   fi
-  run "${git[@]}" "https://github.com/jspecify/${repo}.git" "../${repo}"
+  if [[ "${repo}" == checker-framework ]]; then
+    run "${git[@]}" --branch merge-eisop "https://github.com/wmdietl/${repo}.git" "../${repo}"
+  else
+    run "${git[@]}" "https://github.com/jspecify/${repo}.git" "../${repo}"
+  fi
 }
 
 # We test using some modified samples in a different branch of the jspecify
